@@ -1,5 +1,5 @@
 # LiftSafe Session Handoff
-Last updated: 2026-07-07T17:55:00+02:00
+Last updated: 2026-07-07T18:15:00+02:00
 Branch: staging
 
 ## Protocol
@@ -15,8 +15,17 @@ Branch: staging
 | Grok | LS-041 extraction layer | COMPLETE | pushed |
 | Claude Code | LS-041 UI + full-build verification | COMPLETE | pushed |
 | Claude Code | LS-041 prod smoke test | BLOCKED — prod web not deployed | pushed |
+| Claude Code | Import hierarchy right panel (item visibility) | COMPLETE | pushed |
 | Codex | LS-042 navigation | COMPLETE | pushed |
 | Codex | LS-044 safety harness UI | IN PROGRESS | pushed |
+
+## Import hierarchy right panel (Claude Code) — COMPLETE staging, UI only
+- Commit: `ebd38d4c` (`feat(web): add right panel to import hierarchy builder for per-item equipment visibility`)
+- `web/app/import/page.tsx`: right panel added to the hierarchy step — itemized UNASSIGNED list with per-item assign dropdown, items grouped/listed under their section once assigned (with reassign/unassign dropdown), unassigned-count banner at the top of the step (`ALL N ITEMS PLACED` / `X OF N ITEMS UNASSIGNED`)
+- Section item counts were already live off `section.rows.length` — new per-item moves (`moveItem()`) write to the same `hierarchyDraft` state so both panels + the left tree stay in sync from one source of truth
+- No DB/migrations/edge functions touched — pure UI
+- Proof: `logs/20260707-import-hierarchy-right-panel.md` + screenshot `logs/20260707-import-hierarchy-right-panel.png` (local only, gitignored) — verified live on staging: unassigned an item via dropdown (banner + counts updated), reassigned it to a different section via the unassigned-list dropdown (banner + counts updated again)
+- TSC: root `app/` + `web/` both 0 errors. `cd web && npm run build` PASS
 
 ## LS-041 Extraction (Grok) — COMPLETE staging edge
 - `154.65.98.90`: v2 `intakePrompt` + full foreman live
