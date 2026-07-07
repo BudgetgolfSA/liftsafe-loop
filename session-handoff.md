@@ -1,5 +1,5 @@
 # LiftSafe Session Handoff
-Last updated: 2026-07-07T19:20:00+02:00
+Last updated: 2026-07-07T19:35:00+02:00
 Branch: staging
 
 ## Protocol
@@ -19,8 +19,18 @@ Branch: staging
 | Claude Code | LS-040 LME branding — sidebar + client portal | COMPLETE | pushed |
 | Claude Code | extract-document: tonnage-line section-header bug | COMPLETE staging edge | pushed |
 | Claude Code | Delete button on draft imports | COMPLETE | pushed |
+| Claude Code | Original-document viewer + item-label truncation fix | COMPLETE | pushed |
 | Codex | LS-042 navigation | COMPLETE | pushed |
 | Codex | LS-044 safety harness UI | IN PROGRESS | pushed |
+
+## Original-document viewer + truncation fix (Claude Code) — COMPLETE staging, UI only
+- Commit: `3f1fec1c` (`feat(web): original-document preview panel + fix item-name truncation`)
+- Premise checked first: `import_session.source_url` / `raw_extraction.source` don't exist — `extract-document` deliberately never persists the uploaded file (POPIA, stated in its own code comment). Built a browser-local `blob:` object-URL preview instead (from the `File` object `onFile()` already has) — works for the *current* upload only, correctly absent when resuming a saved draft (nothing to show there, by design, not a bug)
+- Hierarchy step grid becomes 3 columns (`320px_1fr_360px`: viewer | tree | equipment items) when a viewable PDF/image is present, else falls back to the existing 2-column layout
+- Also fixed: both item-label elements in the right panel used Tailwind `truncate` (hover-title only) — swapped for `break-words` so full `asset_description` always renders
+- Staging-verified with a real generated test PDF through the actual AI extraction path: reached hierarchy step with "ALL 6 ITEMS PLACED" (incidental live re-confirmation the tonnage-line fix still holds), iframe `blob:` URL confirmed present, 0 `.truncate` on item labels (only unrelated sidebar user-name text still has it)
+- TSC: root + `web/` both 0 errors. `npm run build` PASS
+- Proof: `logs/20260707-import-doc-viewer-and-truncation.md` + screenshot `logs/20260707-import-doc-viewer.png` (local, gitignored)
 
 ## Delete draft import (Claude Code) — COMPLETE staging, UI only
 - Commit: `fc6d28ef` (`feat(web): add delete button to draft imports in Continue Incomplete Import list`)
