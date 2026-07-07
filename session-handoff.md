@@ -1,5 +1,5 @@
 # LiftSafe Session Handoff
-Last updated: 2026-07-07T18:15:00+02:00
+Last updated: 2026-07-07T18:45:00+02:00
 Branch: staging
 
 ## Protocol
@@ -16,8 +16,18 @@ Branch: staging
 | Claude Code | LS-041 UI + full-build verification | COMPLETE | pushed |
 | Claude Code | LS-041 prod smoke test | BLOCKED — prod web not deployed | pushed |
 | Claude Code | Import hierarchy right panel (item visibility) | COMPLETE | pushed |
+| Claude Code | LS-040 LME branding — sidebar + client portal | COMPLETE | pushed |
 | Codex | LS-042 navigation | COMPLETE | pushed |
 | Codex | LS-044 safety harness UI | IN PROGRESS | pushed |
+
+## LS-040 LME branding (Claude Code) — COMPLETE staging, UI only
+- Commit: `8a00612b` (`feat(web): LS-040 LME branding on dashboard sidebar + client portal`)
+- Audited first: dashboard header (`InspectorTopBar.tsx`), CoF PDFs, and other mobile-generated docs already pulled per-LME logo + `Powered by LiftSafe` watermark from `lme_branding`/`lme_companies.logo_url` — not touched, already correct
+- Fixed 2 real gaps: `SideNav.tsx` (hardcoded "LIFTSAFE" wordmark → live `lme_branding` fetch, logo or trading-name fallback, watermark added) and `web/app/client/layout.tsx` (hardcoded `/liftsafe-logo.jpeg` → resolves servicing LME via `client_lme_assignments` + `lme_companies.logo_url` through the server-only admin client — same pattern already live in `client/equipment/[id]/actions.ts` — watermark added)
+- No migrations, no new RLS — `lme_branding` table already existed from a prior session
+- Proof: `logs/20260707-ls040-lme-branding-ui.md` + screenshot `logs/20260707-ls040-sidebar-branding.png` (local, gitignored) — sidebar live-verified on staging (trading_name fallback rendered correctly + watermark); client portal's new query verified against real staging data (read-only) since no `client_portal` test account exists on staging to browser-test the render directly
+- TSC: root `app/` + `web/` both 0 errors. `cd web && npm run build` PASS
+- **Note for next session**: while editing `SideNav.tsx` and `client/layout.tsx`, both files were silently reverted mid-task by something in this shared working directory (no git reflog entry — likely a `git checkout --` from a concurrent process, not a ref-changing op). Re-applied and committed immediately with `BUILD-LOCK.json` entries held during the redo. Locks released after commit.
 
 ## Import hierarchy right panel (Claude Code) — COMPLETE staging, UI only
 - Commit: `ebd38d4c` (`feat(web): add right panel to import hierarchy builder for per-item equipment visibility`)
