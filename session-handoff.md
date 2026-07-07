@@ -1,5 +1,5 @@
 # LiftSafe Session Handoff
-Last updated: 2026-07-07T16:45:00+02:00
+Last updated: 2026-07-07T17:55:00+02:00
 Branch: staging
 
 ## Protocol
@@ -7,27 +7,37 @@ Branch: staging
 - §18 Grok Slack post: mandatory before reporting to Piet
 
 ## ONLY PRIORITY
-**LS-041 full build verified COMPLETE on staging (12/12 smoke, re-confirmed).** Nothing prod-side touched. Prod deploy of extract-document edge function + prod migration re-verify still requires Piet's explicit "ship it" (see PROD MIGRATION PROTOCOL, AGENTS.md §15).
+**LS-041 prod smoke test BLOCKED (not FAIL): prod web has never been deployed with the LS-041 UI.** DB schema + edge function ARE already on prod (verified read-only). The commit+undo/`created_ids` mechanism can't be exercised on https://admin.liftsafe.co.za until `web/` is promoted to production — a GATE requiring Piet's explicit go-ahead. Full detail: `logs/20260707-prod-import-smoke-test.md`.
 
 ## Agent Status (2026-07-07)
 | Agent | Task | Status | Handoff |
 |---|---|---|---|
 | Grok | LS-041 extraction layer | COMPLETE | pushed |
 | Claude Code | LS-041 UI + full-build verification | COMPLETE | pushed |
+| Claude Code | LS-041 prod smoke test | BLOCKED — prod web not deployed | pushed |
 | Codex | LS-042 navigation | COMPLETE | pushed |
+| Codex | LS-044 safety harness UI | IN PROGRESS | pushed |
 
 ## LS-041 Extraction (Grok) — COMPLETE staging edge
 - `154.65.98.90`: v2 `intakePrompt` + full foreman live
 - `test-extract-parse.mjs` 4/4 PASS
-- Prod edge: NOT deployed
+- Prod edge: **actually deployed** (verified read-only 2026-07-07, byte-identical to staging) — this was a properly Piet-authorized "ship it" done concurrently in a parallel session, documented in `logs/20260707-prod-ls041-ship.md` / `-verify.md` (found after the fact via read-only check, not undocumented drift — correcting an earlier note in this same session that mischaracterized it)
 
 ## LS-041 UI + full build (Claude Code)
 - Committed staging: `3da33cc`, `import-session.ts` wired
 - Full build audit: `logs/20260707-ls041-fullbuild-verification.md` — all UI pieces confirmed in code (client confirm, hierarchy tree, inline create/edit/rename, unassigned panel, draft resume, atomic commit + undo), no TODO/stub markers
-- Smoke test: **PASS 12/12** (re-run this session) — `logs/20260707-ls041-fullbuild-smoke-test.log`
+- Smoke test (staging): **PASS 12/12** — `logs/20260707-ls041-fullbuild-smoke-test.log`
 - TSC: root `app/` 0 errors. `web/` has 1 pre-existing unrelated error in `web/e2e/helpers/rpc.ts` (not caused by this session, not fixed — shared `web/e2e/**` lane, flagged not touched)
-- No DB writes this session (no `--commit`, no migrations) — staging DB untouched beyond read/auth calls
-- Import for Piet: **UNBLOCKED (staging)** — prod not attempted
+- Import for Piet: **UNBLOCKED (staging)**
+
+## LS-041 prod smoke test (Claude Code) — BLOCKED, full detail in `logs/20260707-prod-import-smoke-test.md`
+- Prod DB schema (`import_sessions`, `deleted_at` cols, `bulk_create_assets` returning `created_ids`) — confirmed present, read-only
+- Prod `extract-document` edge function — confirmed present, byte-identical to staging
+- **Prod web app has not been deployed since before LS-041 UI landed** (`vercel ls liftsafe --prod` shows last successful production deploy ~1 day old; a deploy attempt ~52min before this test, by account `dylsavtwa1-arch`, shows status `Error`) — so the live `/import` page still runs the pre-LS-041 flat-CSV flow (no `import_sessions` row, no undo button)
+- Created a dedicated, fully-isolated smoke-test tenant via real `/register` signup (Piet-approved): `Prod Smoke LME 1783435869954` / `prod-smoke+1783435869954@mvotiweights.co.za` — still exists on prod, reusable once web is deployed
+- First browser-driven commit attempt mis-mapped CSV columns (my error, not a product bug — column-mapping UI is *target field → source column*, not the reverse) → 2 garbled asset rows, found + removed (Piet-approved cleanup)
+- Retried with corrected mapping → old flat-CSV path committed cleanly (5 created, 0 skipped) but created no session to test undo against
+- **Outstanding, needs Piet's call**: 5 correctly-created TEST_IMPORT rows + client still on prod, uncleaned (no session to undo through); throwaway smoke tenant still on prod for reuse; actual commit+undo test still pending a prod web deploy
 
 ## Handoff URL (§17)
 https://budgetgolfsa.github.io/liftsafe-loop/session-handoff.md
@@ -47,5 +57,23 @@ https://budgetgolfsa.github.io/liftsafe-loop/session-handoff.md
 - Locked import screen untouched: `web/app/import/page.tsx`
 - Proof: `npx.cmd tsc -p tsconfig.json --noEmit` PASS; `cd web && npm.cmd run build` PASS
 
+## LS-044 Safety Harness (Codex) - IN PROGRESS local UI
+- Screen list first reported to Piet:
+  - `app/(lmi)/inspections/index.tsx` - add Safety Harness under Section 2 LIFTING TACKLE amber cluster
+  - `app/(lmi)/inspections/safety-harness/index.tsx` - new UI-only landing screen
+  - `app/(lmi)/inspections/safety-harness/register.tsx` - new UI-only local draft register/start screen
+  - `app/(lmi)/inspections/safety-harness/[id].tsx` - new UI-only inspection draft screen
+  - `app/(lmi)/_layout.tsx` - route stack registration
+- DB untouched: no migrations, no Supabase calls, no submit path wired
+- Existing forms untouched: `app/(lmi)/inspections/fall-arrest/*` not modified
+- SANS 50358:2008 criteria added from Piet-confirmed clauses only:
+  - Waist belt: cl.4.1.1.1, cl.4.1.1.2, cl.4.1.1.3, cl.4.1.1.4, cl.4.1.1.5, cl.4.1.1.6, cl.4.2.1.1, cl.4.2.3
+  - Work positioning lanyard: cl.4.1.2.1, cl.4.1.2.3, cl.4.1.2.6, cl.4.1.3.4, cl.4.2.1.3, cl.6.2
+- SANS 50360:2003 retractable fall arrester criteria added from Piet-confirmed clauses only:
+  - cl.4.2 material, cl.4.2 connector swivel, cl.4.2 termination, cl.4.3.1 locking function, cl.4.4 static strength certificate, cl.4.5 dynamic performance certificate, cl.4.7 corrosion, cl.6 marking
+- Result buttons are UI/local draft only and use only: CONFORMS / DOES NOT CONFORM / NOT APPLICABLE
+- Source guard: SANS 50364 is test methods only and must not drive field inspection criteria
+- Proof: `npx.cmd tsc -p tsconfig.json --noEmit` PASS; no DB touched
+
 ## Next Action
-Claude Code: run staging `/import` smoke test, push handoff, unblock Piet
+Codex: keep LS-044 DB/submission disabled until explicitly approved
