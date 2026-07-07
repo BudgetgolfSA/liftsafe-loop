@@ -1,5 +1,5 @@
 # LiftSafe Session Handoff
-Last updated: 2026-07-07T19:35:00+02:00
+Last updated: 2026-07-07T19:50:00+02:00
 Branch: staging
 
 ## Protocol
@@ -8,6 +8,8 @@ Branch: staging
 
 ## ONLY PRIORITY
 **LS-041 prod smoke test BLOCKED (not FAIL): prod web has never been deployed with the LS-041 UI.** DB schema + edge function ARE already on prod (verified read-only). The commit+undo/`created_ids` mechanism can't be exercised on https://admin.liftsafe.co.za until `web/` is promoted to production — a GATE requiring Piet's explicit go-ahead. Full detail: `logs/20260707-prod-import-smoke-test.md`.
+
+**Recurring environment issue, flagged again**: the local `c:\liftsafe` working directory has switched itself from `staging` to `main` at least 3 times this session with no matching git reflog entry, and separately had two files silently revert mid-edit (no reflog entry either — consistent with an untracked `git checkout --` from a concurrent process, not this agent). Every task this session double-checked `git branch --show-current` before committing and diffed before pushing, so nothing has actually landed on `origin/main` — but this needs runtime-level investigation (are multiple agents/IDEs sharing this exact checkout?) since it's pure luck no work has been lost to it yet.
 
 ## Agent Status (2026-07-07)
 | Agent | Task | Status | Handoff |
@@ -20,8 +22,18 @@ Branch: staging
 | Claude Code | extract-document: tonnage-line section-header bug | COMPLETE staging edge | pushed |
 | Claude Code | Delete button on draft imports | COMPLETE | pushed |
 | Claude Code | Original-document viewer + item-label truncation fix | COMPLETE | pushed |
+| Claude Code | Import hierarchy layout: sidebar/zoom/3-col width | COMPLETE | pushed |
 | Codex | LS-042 navigation | COMPLETE | pushed |
 | Codex | LS-044 safety harness UI | IN PROGRESS | pushed |
+
+## Import hierarchy layout fixes (Claude Code) — COMPLETE staging, UI only
+- Commit: `03dc646e` (`feat(web): import hierarchy step - hide sidebar, PDF zoom/resize, full-width 3-col layout`)
+- `AdminLayout` gained `hideSideNav` prop, set with `fullWidth` only for `step==='hierarchy'` — sidebar + 7xl cap both restore automatically for every other step
+- Document viewer: zoom in/out (0.25 steps, 50-300%) via CSS transform scale, native `resize:both` handle, larger default height (75vh)
+- 3-column grid: `minmax(320px,1fr) minmax(340px,1fr) minmax(340px,1fr)` + `min-width:1040px` inside `overflow-x-auto` — columns expand to fill available width, wrapper scrolls instead of any column compressing below its floor
+- Staging-verified: sidebar confirmed absent on hierarchy step (present on `/dashboard` baseline), zoom to 150% confirmed via computed transform, `resize:both` confirmed via computed style, grid columns computed at ~372px each (expanding past their 320/340/340 minimums) at a 1264px test viewport
+- TSC: root + `web/` both 0 errors. `npm run build` PASS
+- Proof: `logs/20260707-import-layout-fixes.md` + screenshot `logs/20260707-import-layout-fixes.png` (local, gitignored)
 
 ## Original-document viewer + truncation fix (Claude Code) — COMPLETE staging, UI only
 - Commit: `3f1fec1c` (`feat(web): original-document preview panel + fix item-name truncation`)
