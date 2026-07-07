@@ -1,5 +1,5 @@
 # LiftSafe Session Handoff
-Last updated: 2026-07-07T19:05:00+02:00
+Last updated: 2026-07-07T19:20:00+02:00
 Branch: staging
 
 ## Protocol
@@ -18,8 +18,17 @@ Branch: staging
 | Claude Code | Import hierarchy right panel (item visibility) | COMPLETE | pushed |
 | Claude Code | LS-040 LME branding — sidebar + client portal | COMPLETE | pushed |
 | Claude Code | extract-document: tonnage-line section-header bug | COMPLETE staging edge | pushed |
+| Claude Code | Delete button on draft imports | COMPLETE | pushed |
 | Codex | LS-042 navigation | COMPLETE | pushed |
 | Codex | LS-044 safety harness UI | IN PROGRESS | pushed |
+
+## Delete draft import (Claude Code) — COMPLETE staging, UI only
+- Commit: `fc6d28ef` (`feat(web): add delete button to draft imports in Continue Incomplete Import list`)
+- Premise checked first: no delete RPC/RLS policy exists for `import_sessions` (SELECT/INSERT/UPDATE only) — the existing UPDATE policy + `status='rolled_back'` (already a valid CHECK-constraint value) is the real mechanism, since `fetchDraftImportSessions()` only returns `status='draft'` rows. True soft-delete, no new DB object.
+- DELETE button added next to each draft, native `confirm()` matching the existing "UNDO THIS IMPORT" pattern in the same file
+- Staging-verified: cancel path leaves draft intact; confirm path removes it immediately and it stays gone after a full page reload; read-only DB check confirms the row still exists with `status=rolled_back` (nothing hard-deleted)
+- TSC: root + `web/` both 0 errors. `npm run build` PASS
+- Proof: `logs/20260707-import-draft-delete.md` + screenshot `logs/20260707-delete-draft-import.png` (local, gitignored)
 
 ## extract-document tonnage-line fix (Claude Code) — COMPLETE staging edge only
 - Commit: `04999c49` (`fix(edge): equipment lines with inline tonnage no longer misread as section headers`)
