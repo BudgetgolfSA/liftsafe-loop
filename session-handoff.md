@@ -1,5 +1,5 @@
 # LiftSafe Session Handoff
-Last updated: 2026-07-07T18:45:00+02:00
+Last updated: 2026-07-07T19:05:00+02:00
 Branch: staging
 
 ## Protocol
@@ -17,8 +17,19 @@ Branch: staging
 | Claude Code | LS-041 prod smoke test | BLOCKED — prod web not deployed | pushed |
 | Claude Code | Import hierarchy right panel (item visibility) | COMPLETE | pushed |
 | Claude Code | LS-040 LME branding — sidebar + client portal | COMPLETE | pushed |
+| Claude Code | extract-document: tonnage-line section-header bug | COMPLETE staging edge | pushed |
 | Codex | LS-042 navigation | COMPLETE | pushed |
 | Codex | LS-044 safety harness UI | IN PROGRESS | pushed |
+
+## extract-document tonnage-line fix (Claude Code) — COMPLETE staging edge only
+- Commit: `04999c49` (`fix(edge): equipment lines with inline tonnage no longer misread as section headers`)
+- Bug: lines like "Overhead crane 15Ton", "Hoist 5Ton" (equipment type + trailing tonnage, no serial) were discarded as fake section separators by `isSectionHeaderRow`'s `SECTION_HINT_RE` (matches any label starting with an equipment-type word, regardless of what follows) — same bug existed in the AI prompt's own judgment
+- Fix (`supabase/functions/_shared/extract-parse.ts`): `extractInlineTonnage()` short-circuits `isSectionHeaderRow` to false when a line carries its own tonnage; `cleanRowList` backfills `swl_tonnes`/`equipment_type` from the label; `LARGE_REGISTER_RULES` (the actual AI-facing prompt) now explicitly distinguishes bare category headers from `[Type][Tonnage]` equipment lines
+- **Row count: 0 → 66** on a 66-row/7-section Northam-style test fixture (`scripts/ls-extract-northam-rowcount.mjs`, direct edge-function call, no UI). Section-separator false positives: 66 → 0. Bare headers (e.g. "OVERHEAD CRANES") still correctly used as section names, not rows.
+- Regression-checked: existing staging fixtures (CSV + register snippet) still 12/12 PASS after the fix
+- Deployed staging only (scp + `docker restart supabase-edge-functions`, SHA256-verified identical) — prod has its own separately-shipped copy of this file (from an earlier, unrelated "ship it") and would need its own explicit go-ahead to update
+- **Judgment call, not implemented**: the ask also listed `serial: PROV-[padded index] if no serial present`. Left `serial_number: null` instead — the import UI already has its own opt-in provisional-serial mechanism (`allowProvisionalIds` checkbox), and having the edge function pre-fill `PROV-XXX` would silently bypass that consent gate. Flagged for Piet to confirm intent.
+- No migrations, no UI touched. `supabase/functions/**` is excluded from the root tsconfig (Deno runtime) — TSC pass is N/A for this file; correctness validated via the live before/after test instead.
 
 ## LS-040 LME branding (Claude Code) — COMPLETE staging, UI only
 - Commit: `8a00612b` (`feat(web): LS-040 LME branding on dashboard sidebar + client portal`)
