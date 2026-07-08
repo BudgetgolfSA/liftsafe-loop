@@ -1,5 +1,5 @@
 # LiftSafe Session Handoff
-Last updated: 2026-07-08T18:00:00+02:00
+Last updated: 2026-07-08T20:30:00+02:00
 Branch: staging
 
 ## Protocol
@@ -11,7 +11,9 @@ Branch: staging
 
 | Item | Prod status |
 |------|-------------|
-| Stuck Mvoti sessions (`289410db…`, `0a5af4c7…`) | `signed`, `pending_left: 0` |
+| All stuck SUBMITTED+pending_signature sessions | **0** (round 2 fixed JC-0011/0012) |
+| `lib/openSession.ts` | Excludes submitted job cards from CONTINUE OPEN JOB banner |
+| Mobile AI prompt | `FIELD_MOBILE_LMI_PROMPT` — ≤150 words, standard→scope→checks |
 | `submit_job_card_v2` RPC recurrence fix | `signed_fix_present` on prod + staging |
 | `liftsafe-brain` edge (mime_type magic-byte) | deployed prod |
 | Web Standards Assistant bubble (`/api/ai/assistant`) | Vercel prod live |
@@ -20,15 +22,14 @@ Branch: staging
 
 **LS-044 SANS gap report** — `docs/LS-044-sans-forms-compliance-gap-report.md` (audit only, no form edits). Piet decision on standard mapping before any form work.
 
-## Mobile (staging / preview OTA)
-- LS-045 SCAN/SEARCH equipment register + dossier + callout preselect
-- LS-045-D `mime_type` fix for AI photo queries
-- LS-045 job-card UI overhaul (home banner → Job Orders READY tab) — on staging, verify on preview device
+## Mobile preview OTA (live)
+Update group `81fc33a9-a46d-4fd0-9e56-76d0fdadfefd` — LS-045 scan/search + open session fix + AI mobile prompt
 
-## Piet verify on device
-1. Hard refresh `admin.liftsafe.co.za` → floating AI bubble on non-dashboard pages
-2. Preview OTA → Equipment SCAN/SEARCH + AI photo query (PNG)
-3. Mvoti home — OPEN JOB banners for JC-2026-0013/0014 should be cleared
+## Piet verify on device (pull OTA / restart app first)
+1. Job Orders READY — no CONTINUE OPEN JOB for submitted Mvoti cards
+2. SCAN/SEARCH → Northam PROV serial → dossier with START INSPECTION
+3. AI Assistant — overhead crane question → short answer (not standards dump)
+4. Web `admin.liftsafe.co.za` — AI bubble works (Vercel prod shipped)
 
 ## Next Action
 1. Piet device smoke (items above)
